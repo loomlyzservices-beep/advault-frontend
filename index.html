@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advault — Watch Ads, Earn GHS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<!-- Set your deployed backend URL here before deploying the frontend -->
+<script>window.ADVAULT_API_BASE = 'https://advault-backend-production-4f8f.up.railway.app';</script>
+<!-- Set your LIVE Paystack public key here when you're ready to accept real payments -->
+<!-- <script>window.ADVAULT_PAYSTACK_PUBLIC_KEY = 'pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';</script> -->
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-left">
+      <a class="logo" href="#" id="logoTrigger">
+        <div class="logo-mark"></div>
+        <span class="logo-text font-display">ADVAULT</span>
+      </a>
+    </div>
+    <div class="nav-links">
+      <button data-scroll="top">Home</button>
+      <button data-scroll="ads">Watch Ads</button>
+      <button data-scroll="winners">Winners</button>
+      <button data-scroll="withdraw">Withdraw</button>
+      <div id="navAuthArea"></div>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow"><span class="dot"></span> LIVE IN GHANA</div>
+      <h1>Watch ads. <span class="grad">Earn real cedis.</span></h1>
+      <p id="heroCopy">Advault pays you in GHS every time you watch a short ad. Buy a tier to raise your daily limit and unlock withdrawals straight to mobile money.</p>
+      <div class="hero-ctas">
+        <button class="btn-primary" id="heroCta">Get started</button>
+        <button class="btn-secondary" data-scroll="ads">Watch ads</button>
+      </div>
+      <div class="describe-block">
+        <div class="describe-item">
+          <h4><span class="num">1</span> Watch</h4>
+          <p id="describeWatch">Watch short ads and earn GHS 8 to GHS 16 per ad, credited instantly to your balance.</p>
+        </div>
+        <div class="describe-item">
+          <h4><span class="num">2</span> Unlock a tier</h4>
+          <p id="describeTier">Buy a tier from GHS 65 to GHS 250 to raise your daily ad limit and unlock withdrawals.</p>
+        </div>
+        <div class="describe-item">
+          <h4><span class="num">3</span> Withdraw</h4>
+          <p>Cash out your full balance via Paystack, straight to your mobile money.</p>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:center;" id="heroVisual">
+      <div class="nova-core"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="dashboard">
+  <div class="section-title">Dashboard</div>
+  <div class="section-sub" id="dashboardSub">Log in to see your balance, tier, and today's ad progress.</div>
+  <div class="admin-stat-grid" id="dashboardStats"></div>
+</section>
+
+<section class="block" id="ads">
+  <div class="section-title">Watch Ads</div>
+  <div class="section-sub" id="adsSub">Watch up to 5 short ads per session. Each one pays out a random amount between GHS 8.00 and GHS 16.00.</div>
+  <div class="ads-grid">
+    <div class="ad-slot">
+      <div class="progress-dots" id="progressDots"></div>
+      <div class="ad-screen" id="adScreen">
+        <span id="adScreenLabel" style="position:relative; z-index:1; font-size:13px; color:var(--text-dim); background:rgba(10,7,21,0.55); padding:6px 12px; border-radius:8px;">Ready to play</span>
+        <div class="ad-progress-bar" id="adProgressBar" style="width:0%;"></div>
+      </div>
+      <button class="btn-primary" id="watchAdBtn">Watch an ad</button>
+    </div>
+    <div>
+      <h4 style="margin:0 0 14px; font-size:15px;">Today</h4>
+      <div class="ad-list" id="adStatsList"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="section-title">Buy a Tier</div>
+  <div class="section-sub">Ten tiers, from GHS 65 up to GHS 250. Buying a tier raises your daily ad limit and unlocks withdrawals. The more you watch, the more you can unlock.</div>
+  <div class="tier-grid" id="tierGrid"></div>
+</section>
+
+<section class="block" id="winners">
+  <div class="section-title">Recent Winners</div>
+  <div class="section-sub">A live look at people getting paid on Advault right now.</div>
+  <div class="winners-wrap">
+    <div class="winners-head">
+      <span class="live-pill"><span class="dot"></span> Live</span>
+    </div>
+    <div class="marquee-track" id="winnersTrack"></div>
+  </div>
+</section>
+
+<section class="block" id="withdraw">
+  <div class="section-title">Withdraw</div>
+  <div class="section-sub">Available once you own any tier. Withdraws your full balance via Paystack to your mobile money.</div>
+  <div class="withdraw-panel">
+    <div class="ad-slot" style="min-height:auto; padding:26px;">
+      <div style="font-size:13px; color:var(--text-dim); margin-bottom:6px;">Available balance</div>
+      <div class="tier-price" style="font-size:30px; margin-bottom:18px;" id="withdrawBalance">GHS 0.00</div>
+      <div class="field" style="width:100%;">
+        <label>Mobile money number</label>
+        <input type="tel" id="withdrawPhone" placeholder="e.g. 055 123 4567">
+      </div>
+      <button class="btn-primary" style="width:100%;" id="withdrawBtn">Withdraw full balance</button>
+      <div class="error-text" id="withdrawError"></div>
+    </div>
+    <div>
+      <h4 style="margin:0 0 14px; font-size:15px;">Withdrawal history</h4>
+      <div id="withdrawHistory" style="color:var(--text-faint); font-size:13.5px;">No withdrawals yet.</div>
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+
+<!-- Login / Signup Modal -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal-box">
+    <button class="modal-close" id="loginCloseBtn">✕</button>
+    <div style="display:flex; gap:8px; margin-bottom:18px;">
+      <button class="row-btn" id="loginTabBtn" style="flex:1; text-align:center;">Login</button>
+      <button class="row-btn" id="signupTabBtn" style="flex:1; text-align:center;">Sign up</button>
+    </div>
+
+    <div id="loginPane">
+      <h3>Welcome back</h3>
+      <div class="sub">Log in to your Advault account.</div>
+      <div class="field"><label>Username</label><input type="text" id="loginUsername"></div>
+      <div class="field"><label>Password</label>
+        <div class="pw-wrap"><input type="password" id="loginPassword"><button type="button" class="pw-toggle" data-target="loginPassword">Show</button></div>
+      </div>
+      <div class="error-text" id="loginError"></div>
+      <div class="modal-actions"><button class="btn-primary" style="flex:1;" id="loginSubmitBtn">Log in</button></div>
+    </div>
+
+    <div id="signupPane" class="hidden">
+      <h3>Create your account</h3>
+      <div class="sub">New to Advault? Sign up to start earning.</div>
+      <div class="field"><label>Username</label><input type="text" id="signupUsername"></div>
+      <div class="field"><label>Password (min. 8 characters)</label>
+        <div class="pw-wrap"><input type="password" id="signupPassword"><button type="button" class="pw-toggle" data-target="signupPassword">Show</button></div>
+      </div>
+      <div class="field"><label>Email</label><input type="email" id="signupEmail"></div>
+      <div class="field"><label>Mobile money phone number</label><input type="tel" id="signupPhone"></div>
+      <div class="error-text" id="signupError"></div>
+      <div class="modal-actions"><button class="btn-primary" style="flex:1;" id="signupSubmitBtn">Sign up</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Tier Modal -->
+<div class="modal-overlay hidden" id="purchaseModal">
+  <div class="modal-box">
+    <button class="modal-close" id="purchaseCloseBtn">✕</button>
+    <h3>Confirm purchase</h3>
+    <div class="sub" id="purchaseSub"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1;" id="purchaseCancelBtn">Cancel</button>
+      <button class="btn-primary" style="flex:1;" id="purchaseConfirmBtn">Pay with Paystack</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div class="modal-overlay hidden" id="adminLoginModal">
+  <div class="modal-box">
+    <button class="modal-close" id="adminLoginCloseBtn">✕</button>
+    <h3>Admin access</h3>
+    <div class="sub">Restricted area.</div>
+    <div class="field"><label>Username</label><input type="text" id="adminUsername"></div>
+    <div class="field"><label>Password</label>
+      <div class="pw-wrap"><input type="password" id="adminPassword"><button type="button" class="pw-toggle" data-target="adminPassword">Show</button></div>
+    </div>
+    <div class="error-text" id="adminLoginError"></div>
+    <div class="modal-actions"><button class="btn-primary" style="flex:1;" id="adminLoginSubmitBtn">Enter</button></div>
+  </div>
+</div>
+
+<!-- Confirm Modal (replaces window.confirm everywhere) -->
+<div class="modal-overlay hidden" id="confirmModal" style="z-index:200;">
+  <div class="modal-box" style="max-width:380px;">
+    <h3>Are you sure?</h3>
+    <div class="sub" id="confirmMessage"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="flex:1;" id="confirmCancelBtn">Cancel</button>
+      <button class="btn-danger" style="flex:1; text-align:center;" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast hidden" id="toast"></div>
+
+<!-- Admin Panel -->
+<div class="admin-overlay hidden" id="adminPanel">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <div class="logo-mark"></div>
+        <span class="logo-text font-display">ADVAULT</span>
+      </div>
+      <div class="admin-sidebar-label">Main Menu</div>
+      <nav id="adminTabs">
+        <button class="admin-tab" data-tab="overview"><span class="tab-ico">▦</span> Overview</button>
+        <button class="admin-tab" data-tab="users"><span class="tab-ico">◔</span> Users</button>
+        <button class="admin-tab" data-tab="ads"><span class="tab-ico">▶</span> Ads</button>
+        <button class="admin-tab" data-tab="transactions"><span class="tab-ico">≡</span> Transactions</button>
+        <button class="admin-tab" data-tab="analytics"><span class="tab-ico">◈</span> Ads Analytics</button>
+        <button class="admin-tab" data-tab="withdrawals"><span class="tab-ico">↧</span> Withdrawals</button>
+        <button class="admin-tab" data-tab="controls"><span class="tab-ico">⚙</span> Controls</button>
+      </nav>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <button class="icon-btn admin-menu-btn" id="adminMenuBtn" title="Menu">☰</button>
+        <div class="admin-search">
+          <span style="opacity:0.5;">⌕</span>
+          <input placeholder="Search something...">
+          <button class="link-btn" style="background:var(--card); padding:6px 14px; border-radius:8px;">Search</button>
+        </div>
+        <div class="admin-topbar-right">
+          <button class="icon-btn" title="Refresh" id="adminRefreshBtn">⟳</button>
+          <button class="icon-btn" title="Messages">✉</button>
+          <button class="icon-btn" title="Settings">⚙</button>
+          <button class="icon-btn" title="Log out" id="adminLogoutBtn">⎋</button>
+          <button class="icon-btn" title="Exit to site" id="exitAdminBtn">✕</button>
+        </div>
+      </div>
+
+      <div class="admin-page-header">
+        <div>
+          <h1 id="adminPageTitle">Overview</h1>
+          <p id="adminPageSub">Here's today's report and performance</p>
+        </div>
+        <button class="btn-danger" id="deleteEverythingBtn">Delete everything</button>
+      </div>
+
+      <div class="admin-body">
+        <div class="tab-panel" id="tab-overview"></div>
+        <div class="tab-panel" id="tab-users"></div>
+        <div class="tab-panel" id="tab-ads"></div>
+        <div class="tab-panel" id="tab-transactions"></div>
+        <div class="tab-panel" id="tab-analytics"></div>
+        <div class="tab-panel" id="tab-withdrawals"></div>
+        <div class="tab-panel" id="tab-controls"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
