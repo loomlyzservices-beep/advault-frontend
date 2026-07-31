@@ -116,6 +116,15 @@
         <label>Mobile money number</label>
         <input type="tel" id="withdrawPhone" placeholder="e.g. 055 123 4567">
       </div>
+      <div class="field" style="width:100%;">
+        <label>Network</label>
+        <select id="withdrawNetwork">
+          <option value="">Select network</option>
+          <option value="mtn">MTN Mobile Money</option>
+          <option value="vodafone">Telecel Cash (Vodafone)</option>
+          <option value="airteltigo">AirtelTigo Money</option>
+        </select>
+      </div>
       <button class="btn-primary" style="width:100%;" id="withdrawBtn">Withdraw full balance</button>
       <div class="error-text" id="withdrawError"></div>
     </div>
