@@ -386,12 +386,14 @@ function renderWithdraw(){
 document.getElementById('withdrawBtn').addEventListener('click', async () => {
   if(!state.user){ openModal('loginModal', 'login'); return }
   const phone = document.getElementById('withdrawPhone').value.trim()
+  const network = document.getElementById('withdrawNetwork').value
   const errEl = document.getElementById('withdrawError')
   errEl.textContent = ''
+  if(!network){ errEl.textContent = 'Select your mobile money network.'; return }
   try{
-    const res = await api.withdraw(phone)
+    const res = await api.withdraw(phone, network)
     state.user = res.user
-    toast(`Withdrawal of ${fmt(res.amount)} sent to your mobile money.`)
+    toast(res.message || `Withdrawal of ${fmt(res.amount)} sent to your mobile money.`)
     renderAll()
   }catch(err){
     errEl.textContent = err.message
