@@ -63,7 +63,7 @@ export const api = {
 
   // tiers & withdraw
   purchaseTier: (level, reference) => request('POST', '/api/tiers/purchase', { level, reference }),
-  withdraw: (phone) => request('POST', '/api/withdraw', { phone }),
+  withdraw: (phone, network) => request('POST', '/api/withdraw', { phone, network }),
 
   // admin
   admin: {
