@@ -1,5 +1,5 @@
-import { api } from './api.js'
-import { state, fmt, logout } from './store.js'
+import { api, setAdminToken } from './api.js'
+import { fmt } from './store.js'
 
 // app.js attaches these to window to avoid a circular import
 const toast = (...args) => window.__advaultToast(...args)
@@ -20,17 +20,24 @@ function closeAdminPanel(){
   lockScroll(false)
 }
 
+// Ends the admin session entirely — used by both Exit and Logout, since
+// leaving the admin panel should always mean leaving the admin session too.
+// The site returns to being a plain, logged-out visitor after this; it is
+// never "still admin" in the background.
+async function endAdminSession(){
+  try{ await api.adminLogout() }catch(_){ /* token may already be expired */ }
+  setAdminToken(null)
+  closeAdminPanel()
+  document.querySelector('.admin-sidebar')?.classList.remove('open')
+}
+
 function setupAdminChrome(){
-  document.getElementById('exitAdminBtn').onclick = () => {
-    // Just close the panel — stay logged in as admin so re-opening it
-    // (via the logo) doesn't force another login.
-    closeAdminPanel()
-    document.querySelector('.admin-sidebar')?.classList.remove('open')
+  document.getElementById('exitAdminBtn').onclick = async () => {
+    await endAdminSession()
     renderAll()
   }
   document.getElementById('adminLogoutBtn').onclick = async () => {
-    closeAdminPanel()
-    await logout()
+    await endAdminSession()
     renderAll()
     toast('Logged out.')
   }
