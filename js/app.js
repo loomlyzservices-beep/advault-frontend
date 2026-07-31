@@ -1,14 +1,18 @@
 import { state, fmt, identity, bootstrap, refreshMe, login, signup, logout, watchAd, finishAd, adsAllowance, adsRemaining } from './store.js'
-import { api } from './api.js'
+import { api, setAdminToken } from './api.js'
 import { initialsFor, gradientFor } from './avatar.js'
 import { detectMediaType, toEmbedUrl } from './embed.js'
 import { loadPaystack, payWithPaystack, newReference } from './paystack.js'
 import { openAdminPanel } from './admin.js'
 
-// Admin accounts are shown as "admin" everywhere in the UI, regardless of
-// what their actual login username is.
+// Whether this browser currently holds a valid-looking admin session token.
+// Deliberately independent of state.user — admin is never a "logged in user".
+function hasAdminToken(){
+  return !!localStorage.getItem('advault_admin_token')
+}
+
 function displayName(user){
-  return user && user.isAdmin ? 'admin' : (user ? user.username : '')
+  return user ? user.username : ''
 }
 
 // ---------------------------------------------------------------------------
@@ -70,13 +74,18 @@ document.querySelectorAll('[data-scroll]').forEach(btn => {
   })
 })
 
-document.getElementById('logoTrigger').addEventListener('click', (e) => {
+document.getElementById('logoTrigger').addEventListener('click', async (e) => {
   e.preventDefault()
-  if(state.user && state.user.isAdmin){
-    openAdminPanel()
-  }else{
-    openModal('adminLoginModal')
+  if(hasAdminToken()){
+    try{
+      await api.adminSession() // confirm the token is still valid, not just present
+      openAdminPanel()
+      return
+    }catch(_){
+      setAdminToken(null) // stale/expired — fall through to login
+    }
   }
+  openModal('adminLoginModal')
 })
 
 function renderNavAuth(){
@@ -476,12 +485,8 @@ document.getElementById('adminLoginSubmitBtn').addEventListener('click', async (
   const errEl = document.getElementById('adminLoginError')
   errEl.textContent = ''
   try{
-    await login(username, password)
-    if(!state.user.isAdmin){
-      await logout()
-      errEl.textContent = 'That account does not have admin access.'
-      return
-    }
+    const res = await api.adminLogin({ username, password })
+    setAdminToken(res.token)
     closeModal('adminLoginModal')
     document.getElementById('adminUsername').value = ''
     document.getElementById('adminPassword').value = ''
