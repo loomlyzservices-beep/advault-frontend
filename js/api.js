@@ -6,6 +6,15 @@ export function setToken(token){
   else localStorage.removeItem('advault_token')
 }
 
+// Admin uses a completely separate token/storage key from regular users —
+// on purpose, so an admin session can never be restored as, mixed with, or
+// mistaken for a logged-in user session (or vice versa).
+function getAdminToken(){ return localStorage.getItem('advault_admin_token') }
+export function setAdminToken(token){
+  if(token) localStorage.setItem('advault_admin_token', token)
+  else localStorage.removeItem('advault_admin_token')
+}
+
 // Anonymous browser id so people can watch ads and earn before creating an
 // account. Sent as a header on every request; the backend only uses it when
 // there's no logged-in session.
@@ -23,6 +32,34 @@ async function request(method, path, body){
   const token = getToken()
   if(token) headers.Authorization = `Bearer ${token}`
   else headers['X-Guest-Id'] = getGuestId()
+
+  let res
+  try{
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  }catch(err){
+    throw new Error('Could not reach the server. Check your connection and try again.')
+  }
+
+  let data = null
+  try{ data = await res.json() }catch(_){ /* empty body is fine */ }
+
+  if(!res.ok){
+    throw new Error((data && data.error) || `Request failed (${res.status})`)
+  }
+  return data
+}
+
+// Separate from request() on purpose: always sends the admin token (never
+// the user token), so admin calls can't accidentally ride on or leak into a
+// regular user's session, and vice versa.
+async function adminRequest(method, path, body){
+  const headers = { 'Content-Type': 'application/json' }
+  const token = getAdminToken()
+  if(token) headers.Authorization = `Bearer ${token}`
 
   let res
   try{
@@ -65,35 +102,40 @@ export const api = {
   purchaseTier: (level, reference) => request('POST', '/api/tiers/purchase', { level, reference }),
   withdraw: (phone, network) => request('POST', '/api/withdraw', { phone, network }),
 
+  // admin auth — fully separate from user auth
+  adminLogin: (payload) => request('POST', '/api/admin/login', payload),
+  adminLogout: () => adminRequest('POST', '/api/admin/logout'),
+  adminSession: () => adminRequest('GET', '/api/admin/session'),
+
   // admin
   admin: {
-    overview: () => request('GET', '/api/admin/overview'),
-    users: () => request('GET', '/api/admin/users'),
-    pauseUser: (id) => request('POST', `/api/admin/users/${id}/pause`),
-    unpauseUser: (id) => request('POST', `/api/admin/users/${id}/unpause`),
-    forceLogout: (id) => request('POST', `/api/admin/users/${id}/force-logout`),
-    deleteUser: (id) => request('DELETE', `/api/admin/users/${id}`),
-    deleteAllUsers: () => request('DELETE', '/api/admin/users'),
+    overview: () => adminRequest('GET', '/api/admin/overview'),
+    users: () => adminRequest('GET', '/api/admin/users'),
+    pauseUser: (id) => adminRequest('POST', `/api/admin/users/${id}/pause`),
+    unpauseUser: (id) => adminRequest('POST', `/api/admin/users/${id}/unpause`),
+    forceLogout: (id) => adminRequest('POST', `/api/admin/users/${id}/force-logout`),
+    deleteUser: (id) => adminRequest('DELETE', `/api/admin/users/${id}`),
+    deleteAllUsers: () => adminRequest('DELETE', '/api/admin/users'),
 
-    ads: () => request('GET', '/api/admin/ads'),
-    createAd: (payload) => request('POST', '/api/admin/ads', payload),
-    updateAd: (id, payload) => request('PUT', `/api/admin/ads/${id}`, payload),
-    toggleAd: (id) => request('POST', `/api/admin/ads/${id}/toggle`),
-    deleteAd: (id) => request('DELETE', `/api/admin/ads/${id}`),
-    deleteAllAds: () => request('DELETE', '/api/admin/ads'),
+    ads: () => adminRequest('GET', '/api/admin/ads'),
+    createAd: (payload) => adminRequest('POST', '/api/admin/ads', payload),
+    updateAd: (id, payload) => adminRequest('PUT', `/api/admin/ads/${id}`, payload),
+    toggleAd: (id) => adminRequest('POST', `/api/admin/ads/${id}/toggle`),
+    deleteAd: (id) => adminRequest('DELETE', `/api/admin/ads/${id}`),
+    deleteAllAds: () => adminRequest('DELETE', '/api/admin/ads'),
 
-    transactions: () => request('GET', '/api/admin/transactions'),
-    deleteTransactions: () => request('DELETE', '/api/admin/transactions'),
+    transactions: () => adminRequest('GET', '/api/admin/transactions'),
+    deleteTransactions: () => adminRequest('DELETE', '/api/admin/transactions'),
 
-    resetAnalytics: () => request('POST', '/api/admin/analytics/reset'),
+    resetAnalytics: () => adminRequest('POST', '/api/admin/analytics/reset'),
 
-    withdrawals: () => request('GET', '/api/admin/withdrawals'),
-    deleteWithdrawal: (id) => request('DELETE', `/api/admin/withdrawals/${id}`),
-    deleteAllWithdrawals: () => request('DELETE', '/api/admin/withdrawals'),
+    withdrawals: () => adminRequest('GET', '/api/admin/withdrawals'),
+    deleteWithdrawal: (id) => adminRequest('DELETE', `/api/admin/withdrawals/${id}`),
+    deleteAllWithdrawals: () => adminRequest('DELETE', '/api/admin/withdrawals'),
 
-    saveTier: (level, payload) => request('PUT', `/api/admin/tiers/${level}`, payload),
-    saveSettings: (payload) => request('PUT', '/api/admin/settings', payload),
+    saveTier: (level, payload) => adminRequest('PUT', `/api/admin/tiers/${level}`, payload),
+    saveSettings: (payload) => adminRequest('PUT', '/api/admin/settings', payload),
 
-    resetEverything: () => request('POST', '/api/admin/reset-everything'),
+    resetEverything: () => adminRequest('POST', '/api/admin/reset-everything'),
   },
 }
